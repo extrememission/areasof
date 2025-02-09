@@ -3,255 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Areas of Life</title>
+    <title>Life Balance Tracker</title>
     <style>
-        :root {
-            --bg-color: #ffffff;
-            --text-color: #333333;
-            --bar-bg-color: #f0f0f0;
-            --accent-color: #4CAF50;
-        }
-
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
             margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            padding: 20px;
             transition: background-color 0.3s, color 0.3s;
         }
-
         .dark-mode {
-            --bg-color: #222222;
-            --text-color: #ffffff;
-            --bar-bg-color: #444444;
+            background-color: #333;
+            color: #f0f0f0;
         }
-
-        .hero {
-            background: linear-gradient(135deg, var(--accent-color), #2196F3);
-            color: white;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin: 0;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            margin-top: 0.5rem;
-        }
-
-        .chart-container {
-            display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
-            height: 60vh;
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
             padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
         .bar {
-            width: 12%;
-            height: 100%;
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: center;
+            height: 20px;
+            background-color: #4caf50;
+            transition: width 0.3s;
         }
-
-        .bar-fill {
+        .bar-container {
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        input[type="range"] {
             width: 100%;
-            background-color: var(--accent-color);
-            transition: height 0.3s ease-in-out;
-            border-radius: 5px 5px 0 0;
-            margin-bottom: 10px;
         }
-
-        .score-display {
-            font-weight: bold;
-            margin: 5px 0;
-        }
-
-        .bar-title {
-            width: 100%;
-            text-align: center;
-            margin: 5px 0;
-        }
-
-        .bar input[type="range"] {
-            width: 100%;
-            margin: 5px 0;
-        }
-
-        .average {
-            font-size: 1.2rem;
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 20px;
-        }
-
-        button,
-        .switch {
-            padding: 10px 20px;
-            font-size: 1rem;
+        button {
+            margin-top: 10px;
+            padding: 10px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            background-color: var(--accent-color);
+        }
+        .dark-mode button {
+            background-color: #555;
             color: white;
-            transition: transform 0.3s;
         }
-
-        button:hover,
-        .switch:hover {
-            transform: translateY(-2px);
-        }
-
-        .switch {
-            background-color: #2196F3;
+        .light-mode button {
+            background-color: #4caf50;
+            color: white;
         }
     </style>
 </head>
-
 <body>
-    <div class="hero">
-        <h1>Areas of Life</h1>
-        <p class="subtitle">Visualize and balance the important aspects of your life</p>
-    </div>
-
-    <div class="chart-container" id="chart-container">
-        <!-- Bars will be dynamically added here -->
-    </div>
-
-    <div class="average" id="average">Average Score: 0</div>
-
-    <div class="controls">
-        <button id="save-state">Save State</button>
-        <button id="load-state">Load State</button>
-        <button class="switch" id="dark-mode-toggle">Toggle Dark Mode</button>
+    <div class="container">
+        <h1>Life Balance Tracker</h1>
+        <button id="toggleMode">Toggle Dark Mode</button>
+        <div id="areas"></div>
+        <input type="text" id="newArea" placeholder="Enter a life area" />
+        <button id="addArea">Add Area</button>
+        <div>
+            <strong>Average Score: <span id="averageScore">0</span></strong>
+        </div>
     </div>
 
     <script>
-        const areas = Array(7).fill({
-            title: '',
-            score: 0
-        });
-        const chartContainer = document.getElementById('chart-container');
-        const averageDisplay = document.getElementById('average');
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#B19CD9'];
+        const areas = [];
+        const areasContainer = document.getElementById('areas');
+        const averageScoreDisplay = document.getElementById('averageScore');
+        const toggleModeButton = document.getElementById('toggleMode');
+        let darkMode = false;
 
-        // Initialize bars
-        areas.forEach((_, index) => {
-            const bar = document.createElement('div');
-            bar.className = 'bar';
-
-            const barFill = document.createElement('div');
-            barFill.className = 'bar-fill';
-            barFill.style.backgroundColor = colors[index];
-            barFill.style.height = '0%';
-
-            const scoreDisplay = document.createElement('div');
-            scoreDisplay.className = 'score-display';
-            scoreDisplay.textContent = '0';
-
-            const titleInput = document.createElement('input');
-            titleInput.type = 'text';
-            titleInput.className = 'bar-title';
-            titleInput.value = `Area ${index + 1}`;
-
-            const rangeInput = document.createElement('input');
-            rangeInput.type = 'range';
-            rangeInput.min = '0';
-            rangeInput.max = '10';
-            rangeInput.value = '0';
-
-            bar.appendChild(barFill);
-            bar.appendChild(scoreDisplay);
-            bar.appendChild(titleInput);
-            bar.appendChild(rangeInput);
-
-            chartContainer.appendChild(bar);
-
-            rangeInput.addEventListener('input', function () {
-                const score = parseInt(this.value, 10);
-                barFill.style.height = `${score * 10}%`;
-                scoreDisplay.textContent = score;
-                areas[index].score = score;
-                updateAverage();
-            });
-
-            titleInput.addEventListener('input', function () {
-                areas[index].title = this.value.trim();
-            });
-        });
-
-        function updateAverage() {
+        function updateAverageScore() {
             const totalScore = areas.reduce((sum, area) => sum + area.score, 0);
-            const averageScore = (totalScore / areas.length).toFixed(2);
-            averageDisplay.textContent = `Average Score: ${averageScore}`;
+            const average = areas.length ? (totalScore / areas.length).toFixed(2) : 0;
+            averageScoreDisplay.textContent = average;
         }
 
-        document.getElementById('save-state').addEventListener('click', () => {
-            const blob = new Blob([JSON.stringify(areas, null, 2)], {
-                type: 'application/json'
+        function renderAreas() {
+            areasContainer.innerHTML = '';
+            areas.forEach((area, index) => {
+                const areaDiv = document.createElement('div');
+                areaDiv.innerHTML = `
+                    <div>${area.name}: ${area.score}</div>
+                    <input type="range" min="0" max="10" value="${area.score}" 
+                           onchange="updateScore(${index}, this.value)" />
+                    <div class="bar-container">
+                        <div class="bar" style="width: ${area.score * 10}%"></div>
+                    </div>
+                `;
+                areasContainer.appendChild(areaDiv);
             });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'areas_of_life.aol';
-            a.click();
-            URL.revokeObjectURL(url);
+            updateAverageScore();
+        }
+
+        function updateScore(index, value) {
+            areas[index].score = Number(value);
+            renderAreas();
+        }
+
+        document.getElementById('addArea').addEventListener('click', () => {
+            const newAreaInput = document.getElementById('newArea');
+            const newAreaName = newAreaInput.value.trim();
+            if (newAreaName) {
+                areas.push({ name: newAreaName, score: 5 });
+                newAreaInput.value = '';
+                renderAreas();
+            }
         });
 
-        document.getElementById('load-state').addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-
-            input.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file && file.name.endsWith('.aol')) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const loadedData = JSON.parse(e.target.result);
-                            loadedData.forEach((area, index) => {
-                                if (areas[index]) {
-                                    areas[index] = area;
-                                    const barElement = chartContainer.children[index];
-                                    barElement.querySelector('input[type="range"]').value = area.score || '0';
-                                    barElement.querySelector('.bar-title').value = area.title || '';
-                                    barElement.querySelector('.bar-fill').style.height = `${area.score * 10}%`;
-                                    barElement.querySelector('.score-display').textContent = area.score || '0';
-                                }
-                            });
-                            updateAverage();
-                        } catch (err) {
-                            alert('Invalid file format.');
-                        }
-                    };
-                    reader.readAsText(file);
-                } else {
-                    alert('Please select a valid .aol file.');
-                }
-                input.remove();
-            });
-            input.click();
-        });
-
-        document.getElementById('dark-mode-toggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
+        toggleModeButton.addEventListener('click', () => {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode', darkMode);
+            document.body.classList.toggle('light-mode', !darkMode);
         });
     </script>
 </body>
-
 </html>
