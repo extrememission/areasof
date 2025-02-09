@@ -36,59 +36,54 @@
       justify-content: space-around;
       height: calc(100vh - 200px);
       padding: 20px;
-      position: relative; /* Needed for absolute positioning of bars */
+      position: relative;
     }
     .bar {
       width: 12%;
-      position: relative; /* Needed for absolute positioning within the bar */
+      position: relative;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
     }
     .bar-fill {
-      position: absolute;
-      bottom: 60px; /* Positioned above title and slider */
-      left: 0;
       width: 100%;
       background-color: var(--bar-bg-color);
       transition: height 0.3s ease-in-out;
       border-radius: 10px 10px 0 0;
     }
     .score-display {
-      position: absolute;
-      bottom: calc(60px + var(--bar-height)); /* Dynamically placed above the bar */
-      left: 50%;
-      transform: translateX(-50%);
       font-weight: bold;
-      color: var(--text-color);
+      margin-top: 5px;
     }
     .bar input[type="range"] {
-      position: absolute;
-      bottom: 0; /* Slider at the very bottom */
-      left: 0;
       width: 100%;
+      margin-top: 10px;
     }
     .bar-title {
-      position: absolute;
-      bottom: 30px; /* Title above the slider */
-      left: 0;
       width: 100%;
       text-align: center;
+      margin-top: 5px;
     }
     .average {
       font-size: 1.2em;
       text-align: center;
+      margin-top: 20px;
     }
     .controls {
       display: flex;
       justify-content: center;
       gap: 10px;
-      padding-bottom: 10px; /* Add space at the bottom */
+      padding: 10px;
     }
     button, .switch {
       padding: 10px 20px;
       font-size: 1em;
+      border: none;
       border-radius: 5px;
       cursor: pointer;
       background-color: #4CAF50;
       color: white;
+      transition: background-color 0.3s;
     }
     button:hover, .switch:hover {
       background-color: #45a049;
@@ -124,118 +119,84 @@
 
     // Initialize bars
     areas.forEach((_, index) => {
-        // Create bar container
         const bar = document.createElement('div');
         bar.className = 'bar';
 
-        // Create bar fill (grows upward)
         const barFill = document.createElement('div');
         barFill.className = 'bar-fill';
         barFill.style.backgroundColor = colors[index];
-        barFill.style.height = '0%'; // Initialize bar height to zero
+        barFill.style.height = '0%';
 
-        // Create score display
-        const scoreDisplay = document.createElement('div');
-        scoreDisplay.className = 'score-display';
-        scoreDisplay.textContent = '0';
-
-        // Create slider for scores
         const rangeInput = document.createElement('input');
         rangeInput.type = 'range';
         rangeInput.min = '0';
         rangeInput.max = '10';
         rangeInput.value = '0';
 
-        // Create title input
+        const scoreDisplay = document.createElement('div');
+        scoreDisplay.className = 'score-display';
+        scoreDisplay.textContent = '0';
+
         const titleInput = document.createElement('input');
         titleInput.type = 'text';
         titleInput.className = 'bar-title';
         titleInput.value = `Area ${index + 1}`;
 
-        // Append elements to the bar
-        bar.appendChild(barFill);       // Bar fill at the bottom
-        bar.appendChild(scoreDisplay); // Score display on top of the bar
-        bar.appendChild(titleInput);   // Title above the slider
-        bar.appendChild(rangeInput);   // Slider at the very bottom
+        bar.appendChild(barFill);
+        bar.appendChild(rangeInput);
+        bar.appendChild(scoreDisplay);
+        bar.appendChild(titleInput);
 
         chartContainer.appendChild(bar);
 
-        // Event listener for slider
         rangeInput.addEventListener('input', function() {
             const score = parseInt(this.value, 10);
-            barFill.style.height = `${score * 10}%`; // Update bar height dynamically
-            scoreDisplay.textContent = score;       // Update score display
-            scoreDisplay.style.bottom = `${60 + score * 10}%`; // Move score display with the bar
-            areas[index].score = score;             // Update data array
-            updateAverage();                        // Update average score display
+            barFill.style.height = `${score * 10}%`;
+            scoreDisplay.textContent = score;
+            areas[index].score = score;
+            updateAverage();
         });
 
-        // Event listener for title input
         titleInput.addEventListener('input', function() {
             areas[index].title = this.value.trim();
         });
     });
 
-    // Calculate and display average
     function updateAverage() {
         const totalScore = areas.reduce((sum, area) => sum + area.score, 0);
         const averageScore = (totalScore / areas.length).toFixed(2);
         averageDisplay.textContent = `Average Score: ${averageScore}`;
     }
 
-    // Save state to a .aol file
     document.getElementById('save-state').addEventListener('click', () => {
         const blob = new Blob([JSON.stringify(areas, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
         const a = document.createElement('a');
         a.href = url;
         a.download = 'areas_of_life.aol';
-        
         a.click();
-        
         URL.revokeObjectURL(url);
     });
 
-    // Load state from a .aol file
     document.getElementById('load-state').addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
         
         input.addEventListener('change', (event) => {
             const file = event.target.files[0];
-            
             if (file && file.name.endsWith('.aol')) {
                 const reader = new FileReader();
-                
                 reader.onload = (e) => {
                     try {
                         const loadedData = JSON.parse(e.target.result);
                         loadedData.forEach((area, index) => {
                             if (areas[index]) {
                                 areas[index] = area;
-
-                                // Update UI
                                 const barElement = chartContainer.children[index];
-                                const rangeInputElement =
-                                    barElement.querySelector('input[type="range"]');
-                                const titleInputElement =
-                                    barElement.querySelector('.bar-title');
-                                const barFillElement =
-                                    barElement.querySelector('.bar-fill');
-                                const scoreDisplayElement =
-                                    barElement.querySelector('.score-display');
-
-                                rangeInputElement.value =
-                                    area.score || '0';
-                                titleInputElement.value =
-                                    area.title || '';
-                                barFillElement.style.height =
-                                    `${area.score * 10}%`;
-                                scoreDisplayElement.textContent =
-                                    area.score || '0';
-                                scoreDisplayElement.style.bottom =
-                                    `${60 + area.score * 10}%`;
+                                barElement.querySelector('input[type="range"]').value = area.score || '0';
+                                barElement.querySelector('.bar-title').value = area.title || '';
+                                barElement.querySelector('.bar-fill').style.height = `${area.score * 10}%`;
+                                barElement.querySelector('.score-display').textContent = area.score || '0';
                             }
                         });
                         updateAverage();
@@ -243,19 +204,18 @@
                         alert('Invalid file format.');
                     }
                 };
-                
                 reader.readAsText(file);
             } else {
                 alert('Please select a valid .aol file.');
             }
-            
             input.remove();
         });
-        
         input.click();
     });
 
-    // Dark mode toggle
-    const darkModeToggle =
-document.getElementById("dark-mode-toggle");darkModeToggle.addEventListener("click",()=>{document.body.classList.toggle("dark-mode")});
-</script></body></html>
+    document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+    });
+  </script>
+</body>
+</html>
