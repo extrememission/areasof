@@ -30,66 +30,70 @@
     .hero {
       background: linear-gradient(135deg, var(--accent-color), #2196F3);
       color: white;
-      padding: 4rem 2rem;
+      padding: 2rem;
       text-align: center;
     }
     h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
       margin: 0;
     }
     .subtitle {
       font-size: 1.2rem;
-      margin-top: 1rem;
+      margin-top: 0.5rem;
     }
     .chart-container {
       display: flex;
       justify-content: space-around;
       align-items: flex-end;
-      height: calc(100vh - 300px);
+      height: 60vh;
       padding: 20px;
     }
     .bar {
       width: 12%;
+      height: 100%;
       display: flex;
-      flex-direction: column;
+      flex-direction: column-reverse;
       align-items: center;
     }
     .bar-fill {
       width: 100%;
-      background-color: var(--bar-bg-color);
+      background-color: var(--accent-color);
       transition: height 0.3s ease-in-out;
-      border-radius: 10px 10px 0 0;
+      border-radius: 5px 5px 0 0;
     }
     .score-display {
       font-weight: bold;
-      margin-bottom: 5px;
-      text-align: center;
+      margin: 5px 0;
     }
     .bar-title {
+      width: 100%;
       text-align: center;
-      margin-bottom: 5px;
+      margin: 5px 0;
     }
     .bar input[type="range"] {
       width: 100%;
+      margin: 5px 0;
     }
     .average {
       font-size: 1.2rem;
       text-align: center;
-      margin-top: auto;
+      margin-top: 20px;
     }
     .controls {
       display: flex;
       justify-content: center;
       gap: 10px;
-      padding-bottom: 20px;
+      padding: 20px;
     }
     button, .switch {
       padding: 10px 20px;
       font-size: 1rem;
+      border: none;
       border-radius: 5px;
       cursor: pointer;
       background-color: var(--accent-color);
       color: white;
+      transition: transform 0.3s;
     }
     button:hover, .switch:hover {
       transform: translateY(-2px);
@@ -133,12 +137,6 @@
       barFill.style.backgroundColor = colors[index];
       barFill.style.height = '0%';
 
-      const rangeInput = document.createElement('input');
-      rangeInput.type = 'range';
-      rangeInput.min = '0';
-      rangeInput.max = '10';
-      rangeInput.value = '0';
-
       const scoreDisplay = document.createElement('div');
       scoreDisplay.className = 'score-display';
       scoreDisplay.textContent = '0';
@@ -147,6 +145,12 @@
       titleInput.type = 'text';
       titleInput.className = 'bar-title';
       titleInput.value = `Area ${index + 1}`;
+
+      const rangeInput = document.createElement('input');
+      rangeInput.type = 'range';
+      rangeInput.min = '0';
+      rangeInput.max = '10';
+      rangeInput.value = '0';
 
       bar.appendChild(barFill);
       bar.appendChild(scoreDisplay);
@@ -187,7 +191,7 @@
     document.getElementById('load-state').addEventListener('click', () => {
       const input = document.createElement('input');
       input.type = 'file';
-
+      
       input.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file && file.name.endsWith('.aol')) {
