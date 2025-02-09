@@ -1,179 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Balance Tracker</title>
+    <title>Areas of Life</title>
     <style>
-        /* Basic Styling - Replace with Tailwind CSS or Material Design later */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --bar-bg-color: #f0f0f0;
+            --accent-color: #4CAF50;
+        }
+
         body {
-            font-family: sans-serif;
-            margin: 20px;
-            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for theme change */
-        }
-
-        body.dark-mode {
-            background-color: #121212;
-            color: #ffffff;
-        }
-
-        .container {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        .chart {
-            width: 500px;
-            height: 300px;
+        .dark-mode {
+            --bg-color: #222222;
+            --text-color: #ffffff;
+            --bar-bg-color: #444444;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--accent-color), #2196F3);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+        }
+
+        .chart-container {
             display: flex;
+            justify-content: space-around;
             align-items: flex-end;
-            margin-bottom: 20px;
+            height: 60vh;
+            padding: 20px;
         }
 
         .bar {
-            width: 50px;
-            margin: 5px;
-            background-color: #4CAF50; /* Initial color */
-            transition: height 0.3s ease, background-color 0.3s ease; /* Smooth transition for bar height */
-        }
-
-        .dark-mode .bar {
-            background-color: #42ba49; /* Darker shade for dark mode */
-        }
-
-        .bar:hover {
-            opacity: 0.8;
-        }
-
-        .inputs {
+            width: 12%;
+            height: 100%;
             display: flex;
-            flex-direction: column;
-            width: 500px; /* Match chart width */
-        }
-
-        .input-group {
-            display: flex;
+            flex-direction: column-reverse;
             align-items: center;
+        }
+
+        .bar-fill {
+            width: 100%;
+            background-color: var(--accent-color);
+            transition: height 0.3s ease-in-out;
+            border-radius: 5px 5px 0 0;
             margin-bottom: 10px;
         }
 
-        .input-group label {
-            margin-right: 10px;
+        .score-display {
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .bar-title {
+            width: 100%;
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .bar input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
         }
 
         .average {
+            font-size: 1.2rem;
+            text-align: center;
             margin-top: 20px;
-            font-size: 1.2em;
-        }
-        .theme-toggle {
-            margin-bottom: 15px;
         }
 
-        .reset-button {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background-color: #f44336; /* Red */
-            color: white;
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        button,
+        .switch {
+            padding: 10px 20px;
+            font-size: 1rem;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
+            background-color: var(--accent-color);
+            color: white;
+            transition: transform 0.3s;
         }
 
-        .reset-button:hover {
-            background-color: #d32f2f; /* Darker red */
+        button:hover,
+        .switch:hover {
+            transform: translateY(-2px);
+        }
+
+        .switch {
+            background-color: #2196F3;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <button class="theme-toggle" id="themeToggle">Toggle Theme</button>
-
-        <div class="chart" id="chart"></div>
-        <div class="inputs" id="inputs"></div>
-        <div class="average" id="average">Average: 0</div>
-        <button class="reset-button" id="resetButton">Reset All</button>
-
+    <div class="hero">
+        <h1>Areas of Life</h1>
+        <p class="subtitle">Visualize and balance the important aspects of your life</p>
     </div>
 
+    <div class="chart-container" id="chart-container">
+        <!-- Bars will be dynamically added here -->
+    </div>
 
+    <div class="average" id="average">Average Score: 0</div>
+
+    <div class="controls">
+        <button id="save-state">Save State</button>
+        <button id="load-state">Load State</button>
+        <button class="switch" id="dark-mode-toggle">Toggle Dark Mode</button>
+    </div>
 
     <script>
-        const chart = document.getElementById('chart');
-        const inputs = document.getElementById('inputs');
+        const areas = Array(7).fill({
+            title: '',
+            score: 0
+        });
+        const chartContainer = document.getElementById('chart-container');
         const averageDisplay = document.getElementById('average');
-        const themeToggle = document.getElementById('themeToggle');
-        const resetButton = document.getElementById('resetButton');
-        let data = [];
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#B19CD9'];
 
-        const lifeAreas = ["Health", "Career", "Relationships", "Finance", "Personal Growth", "Fun", "Contribution"]; // Default names
+        // Initialize bars
+        areas.forEach((_, index) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
 
-        function createLifeAreaInputs() {
-            lifeAreas.forEach((area, index) => {
-                const inputGroup = document.createElement('div');
-                inputGroup.classList.add('input-group');
+            const barFill = document.createElement('div');
+            barFill.className = 'bar-fill';
+            barFill.style.backgroundColor = colors[index];
+            barFill.style.height = '0%';
 
-                const label = document.createElement('label');
-                label.textContent = area;
-                inputGroup.appendChild(label);
+            const scoreDisplay = document.createElement('div');
+            scoreDisplay.className = 'score-display';
+            scoreDisplay.textContent = '0';
 
-                const slider = document.createElement('input');
-                slider.type = 'range';
-                slider.min = 0;
-                slider.max = 10;
-                slider.value = 5; // Initial value
-                slider.id = `slider-${index}`;
-                inputGroup.appendChild(slider);
+            const titleInput = document.createElement('input');
+            titleInput.type = 'text';
+            titleInput.className = 'bar-title';
+            titleInput.value = `Area ${index + 1}`;
 
-                inputs.appendChild(inputGroup);
+            const rangeInput = document.createElement('input');
+            rangeInput.type = 'range';
+            rangeInput.min = '0';
+            rangeInput.max = '10';
+            rangeInput.value = '0';
+
+            bar.appendChild(barFill);
+            bar.appendChild(scoreDisplay);
+            bar.appendChild(titleInput);
+            bar.appendChild(rangeInput);
+
+            chartContainer.appendChild(bar);
+
+            rangeInput.addEventListener('input', function () {
+                const score = parseInt(this.value, 10);
+                barFill.style.height = `${score * 10}%`;
+                scoreDisplay.textContent = score;
+                areas[index].score = score;
+                updateAverage();
             });
+
+            titleInput.addEventListener('input', function () {
+                areas[index].title = this.value.trim();
+            });
+        });
+
+        function updateAverage() {
+            const totalScore = areas.reduce((sum, area) => sum + area.score, 0);
+            const averageScore = (totalScore / areas.length).toFixed(2);
+            averageDisplay.textContent = `Average Score: ${averageScore}`;
         }
 
-        function createBars() {
-            lifeAreas.forEach(() => {
-                const bar = document.createElement('div');
-                bar.classList.add('bar');
-                chart.appendChild(bar);
+        document.getElementById('save-state').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(areas, null, 2)], {
+                type: 'application/json'
             });
-        }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'areas_of_life.aol';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
 
-        function updateChart() {
-            const sliders = inputs.querySelectorAll('input[type="range"]');
-            const bars = chart.querySelectorAll('.bar');
-            let sum = 0;
+        document.getElementById('load-state').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
 
-            sliders.forEach((slider, index) => {
-                const value = parseInt(slider.value);
-                const barHeight = value * 20; // Scale to chart height
-                bars[index].style.height = `${barHeight}px`;
-                sum += value;
+            input.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file && file.name.endsWith('.aol')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const loadedData = JSON.parse(e.target.result);
+                            loadedData.forEach((area, index) => {
+                                if (areas[index]) {
+                                    areas[index] = area;
+                                    const barElement = chartContainer.children[index];
+                                    barElement.querySelector('input[type="range"]').value = area.score || '0';
+                                    barElement.querySelector('.bar-title').value = area.title || '';
+                                    barElement.querySelector('.bar-fill').style.height = `${area.score * 10}%`;
+                                    barElement.querySelector('.score-display').textContent = area.score || '0';
+                                }
+                            });
+                            updateAverage();
+                        } catch (err) {
+                            alert('Invalid file format.');
+                        }
+                    };
+                    reader.readAsText(file);
+                } else {
+                    alert('Please select a valid .aol file.');
+                }
+                input.remove();
             });
-            const avg = sliders.length > 0 ? sum / sliders.length : 0;
-            averageDisplay.textContent = `Average: ${avg.toFixed(1)}`;
+            input.click();
+        });
 
-        }
-
-        function initialize() {
-            createLifeAreaInputs();
-            createBars();
-            updateChart(); // Initial chart display
-
-            inputs.addEventListener('input', updateChart);
-
-            themeToggle.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-            });
-            resetButton.addEventListener('click', () => {
-                const sliders = inputs.querySelectorAll('input[type="range"]');
-                sliders.forEach(slider => slider.value = 5);
-                updateChart();
-            });
-        }
-
-        initialize();
+        document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
     </script>
-
 </body>
 
 </html>
