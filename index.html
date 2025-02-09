@@ -141,116 +141,128 @@
         <button class="switch" id="dark-mode-toggle">Toggle Dark Mode</button>
     </div>
 
-    <script>
-        const areas = Array(7).fill({
-            title: '',
-            score: 0
-        });
-        const chartContainer = document.getElementById('chart-container');
-        const averageDisplay = document.getElementById('average');
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#B19CD9'];
+    <script>const areas = Array(7).fill({ title: '', score: 0, improvementNote: '' });
+const chartContainer = document.getElementById('chart-container');
+const averageDisplay = document.getElementById('average');
+const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#B19CD9'];
 
-        // Initialize bars
-        areas.forEach((_, index) => {
-            const bar = document.createElement('div');
-            bar.className = 'bar';
+// Initialize bars
+areas.forEach((_, index) => {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
 
-            const barFill = document.createElement('div');
-            barFill.className = 'bar-fill';
-            barFill.style.backgroundColor = colors[index];
-            barFill.style.height = '0%';
+    const barFill = document.createElement('div');
+    barFill.className = 'bar-fill';
+    barFill.style.backgroundColor = colors[index];
+    barFill.style.height = '0%';
 
-            const scoreDisplay = document.createElement('div');
-            scoreDisplay.className = 'score-display';
-            scoreDisplay.textContent = '0';
+    const scoreDisplay = document.createElement('div');
+    scoreDisplay.className = 'score-display';
+    scoreDisplay.textContent = '0';
 
-            const titleInput = document.createElement('input');
-            titleInput.type = 'text';
-            titleInput.className = 'bar-title';
-            titleInput.value = `Area ${index + 1}`;
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.className = 'bar-title';
+    titleInput.value = `Area ${index + 1}`;
 
-            const rangeInput = document.createElement('input');
-            rangeInput.type = 'range';
-            rangeInput.min = '0';
-            rangeInput.max = '10';
-            rangeInput.value = '0';
+    const rangeInput = document.createElement('input');
+    rangeInput.type = 'range';
+    rangeInput.min = '0';
+    rangeInput.max = '10';
+    rangeInput.value = '0';
 
-            bar.appendChild(barFill);
-            bar.appendChild(scoreDisplay);
-            bar.appendChild(titleInput);
-            bar.appendChild(rangeInput);
+    // Add label and textarea for "What would you like to improve?"
+    const improvementLabel = document.createElement('label');
+    improvementLabel.textContent = "What would you like to improve?";
+    improvementLabel.style.display = "block";
 
-            chartContainer.appendChild(bar);
+    const improvementTextarea = document.createElement('textarea');
+    improvementTextarea.rows = '3';
+    improvementTextarea.placeholder = "Write here...";
+    improvementTextarea.style.width = "100%";
 
-            rangeInput.addEventListener('input', function () {
-                const score = parseInt(this.value, 10);
-                barFill.style.height = `${score * 10}%`;
-                scoreDisplay.textContent = score;
-                areas[index].score = score;
-                updateAverage();
-            });
+    improvementTextarea.addEventListener('input', function () {
+        areas[index].improvementNote = this.value.trim();
+    });
 
-            titleInput.addEventListener('input', function () {
-                areas[index].title = this.value.trim();
-            });
-        });
+    bar.appendChild(barFill);
+    bar.appendChild(scoreDisplay);
+    bar.appendChild(titleInput);
+    bar.appendChild(rangeInput);
+    bar.appendChild(improvementLabel);
+    bar.appendChild(improvementTextarea);
 
-        function updateAverage() {
-            const totalScore = areas.reduce((sum, area) => sum + area.score, 0);
-            const averageScore = (totalScore / areas.length).toFixed(2);
-            averageDisplay.textContent = `Average Score: ${averageScore}`;
-        }
+    chartContainer.appendChild(bar);
 
-        document.getElementById('save-state').addEventListener('click', () => {
-            const blob = new Blob([JSON.stringify(areas, null, 2)], {
-                type: 'application/json'
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'areas_of_life.aol';
-            a.click();
-            URL.revokeObjectURL(url);
-        });
+    rangeInput.addEventListener('input', function () {
+        const score = parseInt(this.value, 10);
+        barFill.style.height = `${score * 10}%`;
+        scoreDisplay.textContent = score;
+        areas[index].score = score;
+        updateAverage();
+    });
 
-        document.getElementById('load-state').addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
+    titleInput.addEventListener('input', function () {
+        areas[index].title = this.value.trim();
+    });
+});
 
-            input.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file && file.name.endsWith('.aol')) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const loadedData = JSON.parse(e.target.result);
-                            loadedData.forEach((area, index) => {
-                                if (areas[index]) {
-                                    areas[index] = area;
-                                    const barElement = chartContainer.children[index];
-                                    barElement.querySelector('input[type="range"]').value = area.score || '0';
-                                    barElement.querySelector('.bar-title').value = area.title || '';
-                                    barElement.querySelector('.bar-fill').style.height = `${area.score * 10}%`;
-                                    barElement.querySelector('.score-display').textContent = area.score || '0';
-                                }
-                            });
-                            updateAverage();
-                        } catch (err) {
-                            alert('Invalid file format.');
+function updateAverage() {
+    const totalScore = areas.reduce((sum, area) => sum + area.score, 0);
+    const averageScore = (totalScore / areas.length).toFixed(2);
+    averageDisplay.textContent = `Average Score: ${averageScore}`;
+}
+
+document.getElementById('save-state').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(areas, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'areas_of_life.aol';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+document.getElementById('load-state').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+
+    input.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file && file.name.endsWith('.aol')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const loadedData = JSON.parse(e.target.result);
+                    loadedData.forEach((area, index) => {
+                        if (areas[index]) {
+                            areas[index] = area;
+                            const barElement = chartContainer.children[index];
+                            barElement.querySelector('input[type="range"]').value = area.score || '0';
+                            barElement.querySelector('.bar-title').value = area.title || '';
+                            barElement.querySelector('.bar-fill').style.height = `${area.score * 10}%`;
+                            barElement.querySelector('.score-display').textContent = area.score || '0';
+                            barElement.querySelector('textarea').value = area.improvementNote || '';
                         }
-                    };
-                    reader.readAsText(file);
-                } else {
-                    alert('Please select a valid .aol file.');
+                    });
+                    updateAverage();
+                } catch (err) {
+                    alert('Invalid file format.');
                 }
-                input.remove();
-            });
-            input.click();
-        });
+            };
+            reader.readAsText(file);
+        } else {
+            alert('Please select a valid .aol file.');
+        }
+        input.remove();
+    });
+    input.click();
+});
 
-        document.getElementById('dark-mode-toggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-        });
+document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+});
+
     </script>
 </body>
 
